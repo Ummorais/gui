@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - LM IA</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* CSS existente */
+        .error { color: red; display: none; }
+        .highlight { font-weight: bold; font-size: 1.2em; }
+        .welcome-container { text-align: center; }
+        .info-box { background-color: white; border: 1px solid #ccc; border-radius: 5px; padding: 15px; margin-top: 20px; width: 300px; position: fixed; bottom: 20px; right: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); text-align: left; transition: box-shadow 0.3s ease; }
+        .info-box:hover { box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); }
+        .welcome-title { font-size: 2em; }
+        .welcome-label { font-size: 1.2em; }
+        .contact-info { display: flex; align-items: center; margin-top: 5px; }
+        .contact-info img { width: 30px; height: 30px; margin-right: 5px; }
+        .contact-link { text-decoration: none; color: #007BFF; font-weight: bold; transition: color 0.3s ease; }
+        .contact-link:hover { text-decoration: underline; color: #0056b3; filter: brightness(1.2); }
+        .button { cursor: pointer; transition: transform 0.2s; }
+        .button:hover { transform: scale(1.05); }
+        .chat-container { display: none; padding: 20px; max-width: 400px; margin: auto; border: 1px solid #ccc; border-radius: 10px; background-color: #f9f9f9; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+        .chat-box { max-height: 300px; overflow-y: auto; padding: 10px; background-color: #fff; border-radius: 5px; }
+        .message { margin: 5px 0; padding: 10px; border-radius: 5px; }
+        .user-message { background-color: #0084ff; color: white; text-align: right; }
+        .bot-message { background-color: #e5e5ea; color: black; text-align: left; }
+        .welcome-message { display: flex; align-items: center; }
+        .welcome-message img { width: 50px; height: 50px; margin-right: 10px; border-radius: 50%; }
+        .alert-box {
+            position: fixed;
+            top: 20px;
+            left: 20px; /* Posição no canto superior esquerdo */
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 15px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000; /* Para garantir que fique sobre outros elementos */
+            display: none; /* Inicialmente escondido */
+            width: 300px; /* Tamanho igual aos outros alertas */
+            max-height: 400px; /* Máxima altura para evitar sobreposição */
+            overflow-y: auto; /* Rolagem se o conteúdo exceder a altura */
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container" id="welcomeContainer">
+        <h1 class="welcome-title">Bem-vindo Logger!</h1>
+        <label class="welcome-label" for="emailInput">Insira seu email:</label>
+        <input type="text" id="emailInput" placeholder="seuemail@loggi.com">
+        <button id="enterBtn" class="button">Entrar</button>
+        <div class="error" id="errorMessage">Por favor, insira um email Loggi.</div>
+    </div>
+
+    <div class="info-box">
+        <p>Atenção: o site está em desenvolvimento! Qualquer sugestão de melhorias, entre em contato com Guilherme Morais:</p>
+        <div class="contact-info">
+            <img src="whats.jpg" alt="WhatsApp Logo">
+            <a href="https://wa.me/5511942315351" class="contact-link" target="_blank">(11) 94231-5351</a>
+        </div>
+        <div class="contact-info">
+            <img src="gmail.jpg" alt="Email Logo">
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=guilherme.pedroso@loggi.com" class="contact-link" target="_blank">Email: guilherme.pedroso@loggi.com</a>
+        </div>
+    </div>
+
+    <div class="alert-box" id="alertBox">
+        <strong>LM - Last Mile</strong><br>
+        Esta IA foi desenvolvida para fins de teste e tem como foco fornecer contatos dos colaboradores de Last Mile e ferramentas de Back Office. Além disso, a IA é capaz de responder a perguntas sobre logística, melhorias de processos.
+        <br><br>
+        <strong>Sugestões de perguntas:</strong>
+        <ul>
+            <li>Qual contato do time de Back Office?</li>
+            <li>Qual contato do time de Last Mile?</li>
+            <li>Qual contato do Coordenador de Last Mile?</li>
+            <li>O que é supply chain?</li>
+            <li>O que é lean Six Sigma?</li>
+        </ul>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-box" id="chatBox">
+            <!-- Mensagens iniciais serão geradas aqui -->
+        </div>
+        <input type="text" id="userInput" placeholder="Digite sua mensagem..." autofocus>
+        <button id="sendBtn" class="button">Enviar</button>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const enterBtn = document.getElementById('enterBtn');
+        const emailInput = document.getElementById('emailInput');
+        const errorMessage = document.getElementById('errorMessage');
+        const welcomeContainer = document.getElementById('welcomeContainer');
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const chatBox = document.getElementById('chatBox');
+        const alertBox = document.getElementById('alertBox'); // Referência para a caixa de alerta
+
+        enterBtn.addEventListener('click', () => {
+            const email = emailInput.value;
+            if (email.includes('@loggi')) {
+                welcomeContainer.style.display = 'none'; // Esconde a tela de boas-vindas
+                chatContainer.style.display = 'block'; // Mostra o chat
+                addWelcomeMessage(); // Adiciona a mensagem de boas-vindas
+                alertBox.style.display = 'block'; // Mostra a caixa de alerta
+                errorMessage.style.display = 'none'; // Esconde mensagem de erro
+            } else {
+                errorMessage.style.display = 'block'; // Mostra mensagem de erro
+            }
+        });
+
+        function addWelcomeMessage() {
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.classList.add('message', 'bot-message');
+            welcomeMessage.innerHTML = `
+                <div class="welcome-message">
+                    <img src="ia.jpg" alt="IA">
+                    <span>Olá, Seja bem-vindo à LM IA!</span>
+                </div>
+            `;
+            chatBox.appendChild(welcomeMessage);
+            chatBox.scrollTop = chatBox.scrollHeight; // Rolagem automática para a última mensagem
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+        userInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function sendMessage() {
+            const message = userInput.value;
+            if (message) {
+                const userMessageDiv = document.createElement('div');
+                userMessageDiv.classList.add('message', 'user-message');
+                userMessageDiv.textContent = message;
+                chatBox.appendChild(userMessageDiv);
+
+                // Limpa o campo de entrada e rola para a última mensagem
+                userInput.value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+
+                // Responder às perguntas
+                handleUserInput(message);
+            }
+        }
+
+        function handleUserInput(input) {
+            let response = '';
+            const lowerInput = input.toLowerCase();
+
+            // Lógica para responder perguntas sobre logística
+            if (lowerInput.includes('logística')) {
+                response = 'Logística é o processo de planejamento, implementação e controle de um fluxo eficiente e eficaz de mercadorias e serviços.';
+            } else if (lowerInput.includes('contato') && lowerInput.includes('back office')) {
+                response = "Contato do time de Back Office:<br><br>Arthur Santos: <a href='https://wa.me/5511933487922' target='_blank'>WhatsApp</a><br>Guilherme Morais: <a href='https://wa.me/5511942315351' target='_blank'>WhatsApp</a><br>Luis Antonio: <a href='https://wa.me/5511964757181' target='_blank'>WhatsApp</a>";
+            } else if (lowerInput.includes('contato') && lowerInput.includes('coordenador de last mile')) {
+                response = "Contato do Coordenador de Last Mile:<br><br>Pedro Savagin: <a href='https://wa.me/5511989149453' target='_blank'>WhatsApp</a>";
+            } else if (lowerInput.includes('contato') && lowerInput.includes('last mile')) {
+                response = "Contatos do time Last Mile:<br><br>Iuri Lima: <a href='https://wa.me/5511988654605' target='_blank'>WhatsApp</a><br>Larissa Fernandes: <a href='https://wa.me/5511911840676' target='_blank'>WhatsApp</a><br>Leandro Duarte: <a href='https://wa.me/5511950663345' target='_blank'>WhatsApp</a><br>Patrick Schneiders: <a href='https://wa.me/556182913105' target='_blank'>WhatsApp</a><br>Thiago Souza: <a href='https://wa.me/5511995065012' target='_blank'>WhatsApp</a><br>Wládia Silva: <a href='https://wa.me/5511972113491' target='_blank'>WhatsApp</a>";
+            } else if (lowerInput.includes('supply chain')) {
+                response = "Supply chain refere-se à gestão de toda a cadeia de suprimentos, desde a produção até a entrega ao consumidor final.";
+            } else if (lowerInput.includes('lean six sigma')) {
+                response = "Lean Six Sigma é uma metodologia que combina o Lean Manufacturing e o Six Sigma para melhorar a eficiência e qualidade dos processos.";
+            } else {
+                response = "Desculpe, não entendi. Poderia reformular sua pergunta?";
+            }
+
+            // Adiciona a resposta ao chat
+            const botMessageDiv = document.createElement('div');
+            botMessageDiv.classList.add('message', 'bot-message');
+            botMessageDiv.innerHTML = response;
+            chatBox.appendChild(botMessageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight; // Rolagem automática para a última mensagem
+        }
+    </script>
+</body>
+</html>
